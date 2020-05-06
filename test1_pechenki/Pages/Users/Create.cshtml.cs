@@ -7,9 +7,11 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using test1_pechenki.Data;
 using test1_pechenki.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace test1_pechenki.Pages.Users
 {
+    [Authorize(Roles = "admin")]
     public class CreateModel : PageModel
     {
         private readonly test1_pechenki.Data.test1_pechenkiContext _context;
@@ -27,19 +29,22 @@ namespace test1_pechenki.Pages.Users
         [BindProperty]
         public User User { get; set; }
 
-        // To protect from overposting attacks, please enable the specific properties you want to bind to, for
-        // more details see https://aka.ms/RazorPagesCRUD.
+
         public async Task<IActionResult> OnPostAsync()
         {
-            if (!ModelState.IsValid)
+            var emptyUser = new User();
+
+            if (await TryUpdateModelAsync<User>(
+                emptyUser,
+                "user",   // Prefix for form value.
+                u => u.FirstMidName, u => u.LastName))
             {
-                return Page();
+                _context.Users.Add(emptyUser);
+                await _context.SaveChangesAsync();
+                return RedirectToPage("./Index");
             }
 
-            _context.Users.Add(User);
-            await _context.SaveChangesAsync();
-
-            return RedirectToPage("./Index");
+            return Page();
         }
     }
 }

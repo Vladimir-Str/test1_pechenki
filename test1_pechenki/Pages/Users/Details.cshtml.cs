@@ -7,9 +7,11 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using test1_pechenki.Data;
 using test1_pechenki.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace test1_pechenki.Pages.Users
 {
+    [Authorize(Roles = "admin")]
     public class DetailsModel : PageModel
     {
         private readonly test1_pechenki.Data.test1_pechenkiContext _context;
@@ -28,7 +30,13 @@ namespace test1_pechenki.Pages.Users
                 return NotFound();
             }
 
-            User = await _context.Users.FirstOrDefaultAsync(m => m.UserID == id);
+            //User = await _context.Users.FirstOrDefaultAsync(m => m.UserID == id);
+
+            User = await _context.Users
+                .Include(s => s.Payments)
+                .Include(e => e.Purchases)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(m => m.UserID == id);
 
             if (User == null)
             {

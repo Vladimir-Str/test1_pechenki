@@ -8,9 +8,11 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using test1_pechenki.Data;
 using test1_pechenki.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace test1_pechenki.Pages.Users
 {
+    [Authorize(Roles = "admin")]
     public class EditModel : PageModel
     {
         private readonly test1_pechenki.Data.test1_pechenkiContext _context;
@@ -30,7 +32,7 @@ namespace test1_pechenki.Pages.Users
                 return NotFound();
             }
 
-            User = await _context.Users.FirstOrDefaultAsync(m => m.UserID == id);
+            User = await _context.Users.FindAsync(id);
 
             if (User == null)
             {
@@ -39,39 +41,26 @@ namespace test1_pechenki.Pages.Users
             return Page();
         }
 
-        // To protect from overposting attacks, please enable the specific properties you want to bind to, for
-        // more details see https://aka.ms/RazorPagesCRUD.
-        public async Task<IActionResult> OnPostAsync()
+
+        public async Task<IActionResult> OnPostAsync(int id)
         {
-            if (!ModelState.IsValid)
+            var UserToUpdate = await _context.Users.FindAsync(id);
+
+            if (UserToUpdate == null)
             {
-                return Page();
+                return NotFound();
             }
 
-            _context.Attach(User).State = EntityState.Modified;
-
-            try
+            if (await TryUpdateModelAsync<User>(
+                UserToUpdate,
+                "user",
+                u => u.FirstMidName, u => u.LastName, u => u.Email, u => u.Password))
             {
                 await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!UserExists(User.UserID))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return RedirectToPage("./Index");
             }
 
-            return RedirectToPage("./Index");
-        }
-
-        private bool UserExists(int id)
-        {
-            return _context.Users.Any(e => e.UserID == id);
+            return Page();
         }
     }
 }

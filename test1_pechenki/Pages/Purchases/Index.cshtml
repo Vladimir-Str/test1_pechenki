@@ -1,0 +1,47 @@
+﻿@page
+@model test1_pechenki.Pages.Purchases.IndexModel
+
+@{
+    ViewData["Title"] = "Покупки";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-page="Create">Добавить покупку</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Purchases[0].PurchaseSum)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Purchases[0].PurchaseDate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Purchases[0].User)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model.Purchases) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.PurchaseSum)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.PurchaseDate)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.User.FirstMidName)
+            </td>
+            <td>
+                <a asp-page="./Edit" asp-route-id="@item.PurchaseID">Edit</a> |
+                <a asp-page="./Delete" asp-route-id="@item.PurchaseID">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

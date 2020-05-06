@@ -7,9 +7,11 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using test1_pechenki.Data;
 using test1_pechenki.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace test1_pechenki.Pages.Users
 {
+    [Authorize(Roles = "admin")]
     public class DeleteModel : PageModel
     {
         private readonly test1_pechenki.Data.test1_pechenkiContext _context;
@@ -21,19 +23,27 @@ namespace test1_pechenki.Pages.Users
 
         [BindProperty]
         public User User { get; set; }
+        public string ErrorMessage { get; set; }
 
-        public async Task<IActionResult> OnGetAsync(int? id)
+        public async Task<IActionResult> OnGetAsync(int? id,bool? saveChangesError = false)
         {
             if (id == null)
             {
                 return NotFound();
             }
 
-            User = await _context.Users.FirstOrDefaultAsync(m => m.UserID == id);
+            User = await _context.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(m => m.UserID == id);
 
             if (User == null)
             {
                 return NotFound();
+            }
+
+            if (saveChangesError.GetValueOrDefault())
+            {
+                ErrorMessage = "Delete failed. Try again";
             }
             return Page();
         }
@@ -45,15 +55,24 @@ namespace test1_pechenki.Pages.Users
                 return NotFound();
             }
 
-            User = await _context.Users.FindAsync(id);
+            var user = await _context.Users.FindAsync(id);
 
-            if (User != null)
+            if (user == null)
             {
-                _context.Users.Remove(User);
-                await _context.SaveChangesAsync();
+                return NotFound();
             }
 
-            return RedirectToPage("./Index");
+            try
+            {
+                _context.Users.Remove(user);
+                await _context.SaveChangesAsync();
+                return RedirectToPage("./Index");
+            }
+            catch (DbUpdateException)
+            {
+                return RedirectToAction("./Delete",
+                                     new { id, saveChangesError = true });
+            }
         }
     }
 }
